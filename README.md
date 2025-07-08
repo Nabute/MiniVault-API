@@ -8,6 +8,12 @@ MiniVault API is a small demonstration service built with [FastAPI](https://fast
 - **Logging** – Every request and response pair is appended to `logs/log.jsonl` with a UTC timestamp.
 - **Easy to extend** – The codebase is intentionally lightweight so real AI logic can be plugged in later.
 
+## Demo Video
+
+> See the full walkthrough of the local model and streaming output in action:
+
+[Watch Demo](https://www.loom.com/share/cc1509989aff4af18cf749b3d4e37ddb?sid=98e03b0a-2d8a-4d0b-a311-597efbb91fed)
+
 ## Installation
 
 1. Create and activate a Python virtual environment:
