@@ -1,6 +1,4 @@
 """
-logger.py
-
 This module handles logging of prompt-response interactions in JSON Lines (JSONL) format.
 Each log entry includes a UTC timestamp, the prompt received, and the corresponding response.
 

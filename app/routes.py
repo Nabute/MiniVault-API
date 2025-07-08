@@ -1,57 +1,63 @@
 """
-routes.py
+Defines the FastAPI routes for the MiniVault API. This module includes a
+streaming endpoint (`/generate`) that accepts a prompt and streams the model's
+response back token-by-token using a generator and FastAPI's StreamingResponse.
 
-This module defines the API endpoints for the MiniVault service using FastAPI.
-It includes a `/generate` endpoint that accepts a prompt and returns a stubbed response,
-logging the interaction for auditing or debugging purposes.
+Each interaction is logged after completion for auditing or debugging purposes.
 """
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from app.model import generate_response
+from app.model import generate_tokens
 from app.logger import log_interaction
 
-# Initialize a FastAPI router instance
 router = APIRouter()
 
 
 class Prompt(BaseModel):
     """
-    Request model for the /generate endpoint.
+    Request model for the `/generate` endpoint.
 
     Attributes:
-        prompt (str): The input string from the user to generate a response for.
+        prompt (str): The user-provided input string used to generate text.
     """
     prompt: str
 
 
-@router.post("/generate", tags=["Generation"])
-async def generate(prompt: Prompt, request: Request):
+@router.post("/generate", response_class=StreamingResponse, tags=["Generation"])
+async def generate(prompt: Prompt):
     """
-    Generate a response for the given prompt.
+    Endpoint that streams text generation in real-time from a language model.
 
-    This endpoint accepts a user prompt, generates a stubbed response using the
-    `generate_response` function, logs the interaction using `log_interaction`,
-    and returns the response to the client.
+    This route receives a text prompt and returns a streaming text response,
+    yielding one token at a time as it is generated. The full prompt-response
+    interaction is logged after generation is complete.
 
     Args:
-        prompt (Prompt): The request body containing the prompt string.
-        request (Request): The FastAPI request object (useful for future enhancements like logging client IP).
+        prompt (Prompt): The JSON request body containing the input text.
 
     Returns:
-        dict: A dictionary containing the generated response.
+        StreamingResponse: A streaming HTTP response that sends back generated tokens
+        one-by-one as plain text.
 
     Example Request:
         POST /generate
         {
-            "prompt": "Hello"
+            "prompt": "Once upon a time"
         }
 
-    Example Response:
-        {
-            "response": "Stubbed response for: 'Hello'"
-        }
+    Example Response (streamed text):
+        " there was a curious little fox..."
     """
-    response_text = generate_response(prompt.prompt)
-    log_interaction(prompt.prompt, response_text)
-    return {"response": response_text}
+    prompt_text = prompt.prompt
+    tokens = generate_tokens(prompt_text)
+
+    def stream():
+        full_output = ""
+        for token in tokens:
+            full_output += token
+            yield token
+        log_interaction(prompt_text, full_output)
+
+    return StreamingResponse(stream(), media_type="text/plain")
